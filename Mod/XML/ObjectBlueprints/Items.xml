@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<objects>
+	<object Name="Anti-Gravity Boots" Load="Merge">
+		<part Name="MechanicalWings" ChargeUse="250"/>
+		<tag Name="Role" Value="Rare" />
+	</object>
+	<object Name="Force Bracelet" Load="Merge">
+		<part Name="Commerce" Value="200" />
+		<removepart Name="ForceEmitter" />
+		<part Name="ForceEmitterTimed" />
+	</object>
+</objects>
