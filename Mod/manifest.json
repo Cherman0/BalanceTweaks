@@ -3,6 +3,7 @@
 	"title": "Balance Tweaks",
 	"description": "Balance Tweaks",
 	"version": "0.1.0",
-    "author": "Cherman0",
-    "PreviewImage": "preview.png"
+	"author": "Cherman0",
+    "tags": "Item",
+	"PreviewImage": "preview.png"
 }
