@@ -4,6 +4,9 @@ using System.Text;
 using XRL.Language;
 using XRL.Rules;
 using XRL.World.Capabilities;
+// Using MyActivatedAbility(ActivatedAbilityID,GetActivePartFirstSubject()) to reference the ability
+// set its AffectedByWillpower var to false (on equip event?)
+// then use CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel())) to set cooldown
 
 namespace XRL.World.Parts {
 
