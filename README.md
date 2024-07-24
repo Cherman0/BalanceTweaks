@@ -2,7 +2,8 @@
 
 Balance Tweaks is a WIP mod intended to address some of the unbalanced design in Caves of Qud, with an emphasis on making the game more difficult by reducing the power of certain standout items.
 
-## Currently it does the following:
+## List of Changes:
+### Items:
 * Anti-Gravity Boots:
   * Charge use increased from 3 to 250
   * Commonality changed from Uncommon to Rare
