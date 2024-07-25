@@ -4,9 +4,9 @@ using System.Text;
 using XRL.Language;
 using XRL.Rules;
 using XRL.World.Capabilities;
-// Using MyActivatedAbility(ActivatedAbilityID,GetActivePartFirstSubject()) to reference the ability
-// set its AffectedByWillpower var to false (on equip event?)
-// then use CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel())) to set cooldown
+// MyActivatedAbility(ActivatedAbilityID,GetActivePartFirstSubject()) returns the ability correctly
+// but CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel())) isnt showing the cooldown
+// on the ability bar. Investigate
 
 namespace XRL.World.Parts {
 
@@ -87,6 +87,7 @@ namespace XRL.World.Parts {
                 DestroyBubble();
                 UptimeRemaining = 0;
                 DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel())); //since we have an activated ability we can use real cooldowns
                 IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
                 return false; //to prevent it from immediately turning back on when handled by the base force bracelet
             }
@@ -97,6 +98,36 @@ namespace XRL.World.Parts {
             }
             UptimeRemaining = GetUptime(MyPowerLoadLevel());
             return base.HandleEvent(E);
+        }
+
+        public override bool HandleEvent(ExamineSuccessEvent E)
+        {
+            bool parentValue = base.HandleEvent(E);
+            if (E.Object == ParentObject && E.Complete)
+            {
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+            }
+            return parentValue;
+        }
+
+        public override bool HandleEvent(ObjectCreatedEvent E)
+        {
+            bool parentValue = base.HandleEvent(E);
+            if (WorksOnSelf)
+            {
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+            }
+            return parentValue;
+        }
+
+        public override bool HandleEvent(EquippedEvent E)
+        {
+            bool parentValue = base.HandleEvent(E);
+            if (ParentObject.Understood())
+            {
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+            }
+            return parentValue;
         }
     }
 }
