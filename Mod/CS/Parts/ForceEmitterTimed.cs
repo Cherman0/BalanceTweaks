@@ -38,6 +38,26 @@ namespace XRL.World.Parts {
             return Downtime + (MyPowerLoadBonus(PowerLoad) * 5);
         }
 
+        new public void SetUpActivatedAbility(GameObject Actor)
+        {
+            //hiding the parent version with one that configures vars to be a cooldownable ability
+            if (Actor != null)
+            {
+                ActivatedAbilityID = Actor.AddActivatedAbility(
+                    GetActivatedAbilityName(Actor),
+                    COMMAND_NAME,
+                    (Actor == ParentObject) ? "Maneuvers" : "Items",
+                    null,
+                    "è",
+                    AffectedByWillpower : false,
+                    Toggleable : true,
+                    DefaultToggleState : false,
+                    ActiveToggle : true,
+                    IsAttack : false
+                    );
+            }
+        }
+
         public override bool HandleEvent(EndTurnEvent E)
         {
             if(DowntimeRemaining > 0)
@@ -56,6 +76,7 @@ namespace XRL.World.Parts {
             {
                 DestroyBubble();
                 DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()));
                 IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
             }
             return base.HandleEvent(E);
@@ -68,6 +89,7 @@ namespace XRL.World.Parts {
                 DestroyBubble();
                 UptimeRemaining = 0;
                 DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()));
                 IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
                 return false; //to prevent it from immediately turning back on when handled by the base force bracelet
             }
@@ -102,32 +124,36 @@ namespace XRL.World.Parts {
 
         public override bool HandleEvent(ExamineSuccessEvent E)
         {
-            bool parentValue = base.HandleEvent(E);
             if (E.Object == ParentObject && E.Complete)
             {
-                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+                SetUpActivatedAbility(ParentObject.Equipped);
             }
-            return parentValue;
+            //dont call parent since we hid SetUpActivatedAbility() and dont want to call the parent version of it
+            return false;
         }
 
         public override bool HandleEvent(ObjectCreatedEvent E)
         {
-            bool parentValue = base.HandleEvent(E);
             if (WorksOnSelf)
             {
-                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+                SetUpActivatedAbility(ParentObject);
             }
-            return parentValue;
+            //dont call parent since we hid SetUpActivatedAbility() and dont want to call the parent version of it
+            return false;
         }
 
         public override bool HandleEvent(EquippedEvent E)
         {
-            bool parentValue = base.HandleEvent(E);
+            E.Actor.RegisterPartEvent(this, "BeginMove");
+            E.Actor.RegisterPartEvent(this, "EffectApplied");
+            E.Actor.RegisterPartEvent(this, "EnteredCell");
+            E.Actor.RegisterPartEvent(this, "MoveFailed");
             if (ParentObject.Understood())
             {
-                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).AffectedByWillpower = false;
+                SetUpActivatedAbility(E.Actor);
             }
-            return parentValue;
+            //dont call parent since we hid SetUpActivatedAbility() and dont want to call the parent version of it
+            return false;
         }
     }
 }
