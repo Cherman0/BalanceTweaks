@@ -11,17 +11,19 @@ using XRL.World.Capabilities;
 namespace XRL.World.Parts {
 
     [Serializable]
-    public class ForceEmitterTimed : ForceEmitter
+    public class Cherman0_BalanceTweaks_ForceEmitterTimed : ForceEmitter
     {
         public int Uptime = 10;
 
+        public int UptimeOverloadBonus = 5;
+
         public int Downtime = 50;
+
+        public int DowntimeOverloadBonus = 10;
 
         public int UptimeRemaining = 10;
 
-        public int DowntimeRemaining = 0;
-
-        public ForceEmitterTimed() : base()
+        public Cherman0_BalanceTweaks_ForceEmitterTimed() : base()
         {
 
         }
@@ -29,13 +31,13 @@ namespace XRL.World.Parts {
         public int GetUptime(int PowerLoad)
         {
             //10 normallly; 15 with overloaded
-            return Uptime + (MyPowerLoadBonus(PowerLoad) * 5 / 2);
+            return Uptime + (MyPowerLoadBonus(PowerLoad) / 2) * UptimeOverloadBonus;
         }
 
         public int GetDowntime(int PowerLoad)
         {
             //50 normally; 40 with overload
-            return Downtime + (MyPowerLoadBonus(PowerLoad) * 5);
+            return Downtime - (MyPowerLoadBonus(PowerLoad) / 2) * DowntimeOverloadBonus;
         }
 
         new public void SetUpActivatedAbility(GameObject Actor)
@@ -60,14 +62,6 @@ namespace XRL.World.Parts {
 
         public override bool HandleEvent(EndTurnEvent E)
         {
-            if(DowntimeRemaining > 0)
-            {
-                DowntimeRemaining--;
-                if(DowntimeRemaining <= 0)
-                {
-                    IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor has finished recharging!");
-                }
-            }
             if(UptimeRemaining > 0)
             {
                 UptimeRemaining--;
@@ -75,11 +69,30 @@ namespace XRL.World.Parts {
             if (UptimeRemaining <= 0 && IsActive())
             {
                 DestroyBubble();
-                DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
-                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()));
-                IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()), GetActivePartFirstSubject());
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).ToggleState = false;
             }
             return base.HandleEvent(E);
+        }
+        public override bool HandleEvent(GetInventoryActionsEvent E)
+        {
+            if (ParentObject.Understood())
+            {
+                GameObject activePartFirstSubject = GetActivePartFirstSubject();
+                if (activePartFirstSubject != null && activePartFirstSubject.IsPlayer())
+                {
+                    if (IsActive())
+                    {
+                        E.AddAction("Deactivate", "deactivate", COMMAND_NAME, null, 'a', FireOnActor: false, 10);
+                    }
+                    else if(!IsMyActivatedAbilityCoolingDown(ActivatedAbilityID, activePartFirstSubject))
+                    {
+                        E.AddAction("Activate", "activate", COMMAND_NAME, null, 'a', FireOnActor: false, 10);
+                    }
+                }
+            }
+
+            return false;
         }
 
         public override bool HandleEvent(InventoryActionEvent E)
@@ -88,18 +101,16 @@ namespace XRL.World.Parts {
             {
                 DestroyBubble();
                 UptimeRemaining = 0;
-                DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
-                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()));
-                IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()), GetActivePartFirstSubject());
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).ToggleState = false;
                 return false; //to prevent it from immediately turning back on when handled by the base force bracelet
             }
-            else if (DowntimeRemaining > 0)
+            else
             {
-                IComponent<GameObject>.AddPlayerMessage(ParentObject.Does("are") + " on cooldown for " + DowntimeRemaining + " more turns!");
-                return false; //we're turned off and on cooldown so we shouldn't toggle
+                UptimeRemaining = GetUptime(MyPowerLoadLevel());
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).ToggleState = true;
+                return base.HandleEvent(E);
             }
-            UptimeRemaining = GetUptime(MyPowerLoadLevel());
-            return base.HandleEvent(E);
         }
 
         public override bool HandleEvent(CommandEvent E)
@@ -108,18 +119,16 @@ namespace XRL.World.Parts {
             {
                 DestroyBubble();
                 UptimeRemaining = 0;
-                DowntimeRemaining = GetDowntime(MyPowerLoadLevel());
-                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel())); //since we have an activated ability we can use real cooldowns
-                IComponent<GameObject>.AddPlayerMessage(ParentObject + "'s capacitor is expended and it shuts down! It will take " + DowntimeRemaining + " turns to recharge.");
+                CooldownMyActivatedAbility(ActivatedAbilityID, GetDowntime(MyPowerLoadLevel()), GetActivePartFirstSubject());
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).ToggleState = false;
                 return false; //to prevent it from immediately turning back on when handled by the base force bracelet
             }
-            else if (DowntimeRemaining > 0)
+            else
             {
-                IComponent<GameObject>.AddPlayerMessage(ParentObject.Does("are") + " on cooldown for " + DowntimeRemaining + " more turns!");
-                return false; //we're turned off and on cooldown so we shouldn't toggle
+                UptimeRemaining = GetUptime(MyPowerLoadLevel());
+                MyActivatedAbility(ActivatedAbilityID, GetActivePartFirstSubject()).ToggleState = true;
+                return base.HandleEvent(E);
             }
-            UptimeRemaining = GetUptime(MyPowerLoadLevel());
-            return base.HandleEvent(E);
         }
 
         public override bool HandleEvent(ExamineSuccessEvent E)

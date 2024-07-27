@@ -7,6 +7,6 @@
 	<object Name="Force Bracelet" Load="Merge">
 		<part Name="Commerce" Value="200" />
 		<removepart Name="ForceEmitter" />
-		<part Name="ForceEmitterTimed" />
+		<part Name="Cherman0_BalanceTweaks_ForceEmitterTimed" ChargeUse="1000" Uptime="10" UptimeOverloadBonus="5" Downtime="50" DowntimeOverloadBonus="10"/>
 	</object>
 </objects>
